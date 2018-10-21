@@ -1,110 +1,123 @@
 const INF = Infinity;
 const readline = require('readline');
 
-const rl = readline.createInterface({
+/////////Initialize console in\output////////////////
+
+const textStream = readline.createInterface({
 	input: process.stdin,
 	output: process.stdout
 });
 
 
-rl.question(`Input N and M: `, (input) => {
-	n = input.split(" ")[0];
+//////////////NodeJs console query//////////////////
+textStream.question(`Input N and M: `, (input) => {
+	numberOfNodes = input.split(" ")[0];
 	m = input.split(" ")[1];
 	let userNodes = [];
 	let counter = 0;
-	let g = [];
+	let graph = [];
 
-	for (let i = 0; i <= n; i++) {
-		g[i] = [];
+	for (let i = 0; i <= numberOfNodes; i++) {
+		graph[i] = [];
 	}
 
-	rl.on('line', (input) => {
+	textStream.on('line', (input) => {
 		if (counter == 0) {
-			userNodes = input.split(" ").map((value) => {return value-1});
+			userNodes = input.split(" ").map((value) => { return value - 1 });
 			counter++;
 		} else {
 			input = input.split(" ");
 			let from = parseInt(input[0]) - 1;
-			console.log(from);
 			let to = parseInt(input[1]) - 1;
 			let weight = parseInt(input[2]);
 
-			g[from].push({ first: to, second: weight });
-			g[to].push({ first: from, second: weight });
+			graph[from].push({ to: to, weight: weight });
+			graph[to].push({ to: from, weight: weight });
 			counter++;
 
 
 			if (counter > m) {
-				rl.close;
-				console.log(n, m, g);
-				console.log(' ');
-				main(n, m, g, userNodes);
+				textStream.close();
+				main(numberOfNodes, graph, userNodes);
 			}
 		}
 	});
-	//6 rl.close()
 })
 
-//Main function
-function main(n, m, g, userNodes) {
+////////////Main function//////////////////
+function main(numberOfNodes, graph, userNodes) {
 
-	let s = 0; // стартова вершина
+	let startNode = 0; // start Node
 	let maxPing = INF;
 	let bestNode = -1;
 
-	for (let i = 0; i < n; i++) {
+	// Check all Nodes and search best routes
+	for (let i = 0; i < numberOfNodes; i++) {
 
-		let d = [], p = [];
-		for (let i = 0; i < n; i++) {
-			d[i] = INF;
-		}
+		//If this node is not user, than start algo
+		if (!userNodes.includes(startNode)) {
 
-		d[s] = 0;
-		let u = [];
-		for (let i = 0; i < n; ++i) {
-			let v = -1;
-			for (let j = 0; j < n; ++j)
-				if (!u[j] && (v == -1 || d[j] < d[v]))
-					v = j;
-			if (d[v] == INF)
-				break;
-			u[v] = true;
+			let distanceArray = [];
 
-			for (let j = 0; j < g[v].length; ++j) {
-				let to = g[v][j].first,
-					len = g[v][j].second;
-				if (d[v] + len < d[to]) {
-					d[to] = d[v] + len;
-					p[to] = v;
+			//Initialize array of Infinity  values
+			for (let iterator = 0; iterator < numberOfNodes; ++iterator) {
+				distanceArray[iterator] = INF;
+			}
+
+			distanceArray[startNode] = 0;
+			let visitedNodes = [];
+
+			for (let iterator = 0; iterator < numberOfNodes; ++iterator) {
+
+				let currentNode = -1;
+
+				for (let j = 0; j < numberOfNodes; ++j) {
+					if (!visitedNodes[j] && (currentNode == -1 || distanceArray[j] < distanceArray[currentNode]))
+						currentNode = j;
+				}
+
+				if (distanceArray[currentNode] == INF) {
+					break;
+				}
+
+				visitedNodes[currentNode] = true;
+
+				for (let j = 0; j < graph[currentNode].length; ++j) {
+					let to = graph[currentNode][j].to,
+						len = graph[currentNode][j].weight;
+					if (distanceArray[currentNode] + len < distanceArray[to]) {
+						distanceArray[to] = distanceArray[currentNode] + len;
+					}
 				}
 			}
-		}
 
 
-		let withoutRouters = d.map(function(value, index) {
-			if(userNodes.includes(index)) {
-				return value;
-			} else {
-				return -1;
+
+			let withoutRouters = distanceArray.map(function (value, index) {
+				if (userNodes.includes(index)) {
+					return value;
+				} else {
+					return -1;
+				}
+			});
+
+			let maxPingInIteration = Math.max(...withoutRouters);
+			console.log("Current Node: " + (startNode + 1));
+
+
+			if (maxPing > maxPingInIteration) {
+				maxPing = maxPingInIteration;
+				bestNode = startNode;
+				console.log("Best Node: " + (startNode + 1));
 			}
-		});
-		
-		let maxPingInIteration = Math.max(...withoutRouters);
-		console.log("Current Node: " + (s+1));
-
-
-		if (maxPing > maxPingInIteration && !userNodes.includes(s)) {
-			maxPing = maxPingInIteration;
-			bestNode = s;
-			console.log("Best Node: " + (s+1));
 		}
 
-		s++;
+		startNode++;
 
 	}
 
 
-
+	console.log('!!!!!!!!!!!!!!!! Answer !!!!!!!!!!!!!!!!!!!');
 	console.log('Final Best Node: ' + (bestNode + 1));
 	console.log('Max Ping: ' + maxPing);
 
